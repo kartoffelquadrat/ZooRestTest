@@ -5,6 +5,7 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import eu.kartoffelquadrat.zoo.Animal;
+import eu.kartoffelquadrat.zoo.OpeningHours;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -24,13 +25,16 @@ public class ZooTest
     public void testOpeningHoursGet() throws UnirestException {
 
         // Try to retrieve catalogue
-        HttpResponse<String> openingHours = Unirest.get(getServiceURL("/openinghours")).asString();
-        verifyOk(openingHours);
+        HttpResponse<String> openingHoursReply = Unirest.get(getServiceURL("/openinghours")).asString();
+        verifyOk(openingHoursReply);
 
         // Verify and return catalogue content
-        String body = openingHours.getBody();
-        assert body.contains("9AM");
+        // Deserialize response
+        OpeningHours openingHours = new Gson().fromJson(openingHoursReply.getBody(), OpeningHours.class);
 
+        // Verify that opening hours are set
+        assert !openingHours.getMonFri().isEmpty();
+        assert !openingHours.getWeekEnd().isEmpty();
     }
 
     /**
@@ -46,8 +50,8 @@ public class ZooTest
         // Deserialize result
         Collection<Animal> animals = new Gson().fromJson(allAnimals.getBody(), new LinkedList<Animal>().getClass());
 
-        // Verify catalogue content
-        assert animals.size() == 3;
+        // Verify catalogue content (greater equals, since api test adds new animas, and we want to be able to run the tests repeatedly).
+        assert animals.size() >= 3;
     }
 
     /**
